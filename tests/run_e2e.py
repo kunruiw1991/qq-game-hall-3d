@@ -531,6 +531,91 @@ def test_t4_06_subpath_hosting_and_webgl2_screenshot_variance(h: QQHallTestHarne
     h.navigate(h.http_server.base_url, wait_hall=True)
 
 
+# ============================================================================
+# TIER 5: Fun Overhaul — Cross-Game Progress Badges (shared-origin qq_hall_progress)
+# ============================================================================
+
+def test_t5_01_progress_line_shows_new_then_stars_from_shared_storage(h: QQHallTestHarness) -> None:
+  _reset_hall(h)
+  res = h.eval_js(
+      """(() => {
+        const api = window.__QQ_HALL__;
+        localStorage.removeItem('qq_hall_progress');
+        api.refreshProgress();
+        const el = document.querySelector('[data-testid="selected-progress-line"]');
+        const before = { text: el.textContent.trim(), stars: el.getAttribute('data-stars') };
+        localStorage.setItem('qq_hall_progress', JSON.stringify({
+          tang: { plays: 3, best: '2胜', stars: 2, last: '2026-10-29T10:00:00Z' },
+          watermelon: { plays: 1, best: 2258, stars: 1, last: '2026-10-29T12:00:00Z' },
+        }));
+        const st = api.refreshProgress();
+        const afterTang = { text: el.textContent.trim(), stars: el.getAttribute('data-stars') };
+        api.selectGame('watermelon', { instantSnap: true, silent: true });
+        const afterMelon = { text: el.textContent.trim(), stars: el.getAttribute('data-stars') };
+        api.selectGame('aeroplane', { instantSnap: true, silent: true });
+        const afterPlane = { text: el.textContent.trim(), stars: el.getAttribute('data-stars') };
+        const rect = el.getBoundingClientRect();
+        localStorage.removeItem('qq_hall_progress');
+        return { before, afterTang, afterMelon, afterPlane, progressKeys: Object.keys(st.progress || {}),
+                 progressLine: st.progressLine, visible: rect.width > 10 && rect.height > 8,
+                 hud: st.hudClickableCount };
+      })()"""
+  )
+  assert "还没玩过" in res["before"]["text"] and res["before"]["stars"] == "0", res
+  assert res["afterTang"]["stars"] == "2" and "★★☆" in res["afterTang"]["text"], res
+  assert "2胜" in res["afterTang"]["text"] and "玩过 3 次" in res["afterTang"]["text"], res
+  assert res["afterMelon"]["stars"] == "1" and "2258" in res["afterMelon"]["text"], res
+  assert "还没玩过" in res["afterPlane"]["text"], res
+  assert sorted(res["progressKeys"]) == ["tang", "watermelon"], res
+  assert res["visible"] is True, res
+  assert res["hud"] <= 6, res
+
+
+def test_t5_02_progress_refreshes_on_return_from_embedded_and_tolerates_garbage(h: QQHallTestHarness) -> None:
+  _reset_hall(h)
+  res = h.eval_js(
+      """(() => {
+        const api = window.__QQ_HALL__;
+        const el = document.querySelector('[data-testid="selected-progress-line"]');
+        localStorage.setItem('qq_hall_progress', '{not json');
+        api.refreshProgress();
+        const garbage = el.textContent.trim();
+        api.openEmbedded('bubbledragon', { src: 'about:blank' });
+        // Simulate the embedded game writing progress while open
+        localStorage.setItem('qq_hall_progress', JSON.stringify({
+          bubbledragon: { plays: 5, best: 9100, stars: 3, last: new Date().toISOString() },
+        }));
+        const st = api.closeEmbedded();
+        const afterReturn = { text: el.textContent.trim(), stars: el.getAttribute('data-stars') };
+        localStorage.removeItem('qq_hall_progress');
+        return { garbage, afterReturn, selected: st.selectedGameId, errors: st.errors.jsErrors.length };
+      })()"""
+  )
+  assert "还没玩过" in res["garbage"], res
+  assert res["selected"] == "bubbledragon", res
+  assert res["afterReturn"]["stars"] == "3" and "★★★" in res["afterReturn"]["text"], res
+  assert "9100" in res["afterReturn"]["text"], res
+  assert res["errors"] == 0, res
+
+
+def test_t5_03_last_played_game_is_preselected_without_hash(h: QQHallTestHarness) -> None:
+  _reset_hall(h)
+  h.eval_js(
+      """localStorage.setItem('qq_hall_progress', JSON.stringify({
+        tang: { plays: 1, best: '1胜', stars: 1, last: '2026-10-28T10:00:00Z' },
+        aeroplane: { plays: 2, best: '第1名', stars: 3, last: '2026-10-29T15:30:00Z' },
+      }))"""
+  )
+  try:
+    h.navigate(h.http_server.base_url + "?nocache=1", wait_hall=True)
+    st = h.eval_js("window.__QQ_HALL__.stepFrames(2)")
+    assert st["selectedGameId"] == "aeroplane", st["selectedGameId"]
+    assert st["progressLine"]["stars"] == 3, st["progressLine"]
+  finally:
+    h.eval_js("localStorage.removeItem('qq_hall_progress')")
+    h.navigate(h.http_server.base_url, wait_hall=True)
+
+
 ALL_TESTS: list[TestCaseSpec] = [
     TestCaseSpec(1, "T1.01_frozen_api_and_deep_clone", "plaza_core", test_t1_01_frozen_api_and_deep_clone),
     TestCaseSpec(1, "T1.02_webgl2_plaza_and_viewport_coverage", "plaza_core", test_t1_02_webgl2_plaza_and_viewport_coverage),
@@ -560,12 +645,15 @@ ALL_TESTS: list[TestCaseSpec] = [
     TestCaseSpec(4, "T4.04_viewport_390x844_mobile_portrait_and_touch_swipe", "viewport_ux", test_t4_04_viewport_390x844_mobile_portrait_and_touch_swipe),
     TestCaseSpec(4, "T4.05_safari_zero_importmap_bare_specifiers_and_tts_audit", "safari_compat", test_t4_05_safari_zero_importmap_bare_specifiers_and_tts_audit),
     TestCaseSpec(4, "T4.06_subpath_hosting_and_webgl2_screenshot_variance", "subpath_hosting", test_t4_06_subpath_hosting_and_webgl2_screenshot_variance),
+    TestCaseSpec(5, "T5.01_progress_line_shows_new_then_stars_from_shared_storage", "progress_badges", test_t5_01_progress_line_shows_new_then_stars_from_shared_storage),
+    TestCaseSpec(5, "T5.02_progress_refreshes_on_return_from_embedded_and_tolerates_garbage", "progress_badges", test_t5_02_progress_refreshes_on_return_from_embedded_and_tolerates_garbage),
+    TestCaseSpec(5, "T5.03_last_played_game_is_preselected_without_hash", "progress_badges", test_t5_03_last_played_game_is_preselected_without_hash),
 ]
 
 
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description="Run QQ Game Hall 3D E2E Test Suite")
-  parser.add_argument("--tier", default="all", choices=["1", "2", "3", "4", "all"])
+  parser.add_argument("--tier", default="all", choices=["1", "2", "3", "4", "5", "all"])
   parser.add_argument("--root-dir", default=str(DEFAULT_PROJECT_ROOT))
   parser.add_argument("--filter", default="")
   parser.add_argument("--list", action="store_true")

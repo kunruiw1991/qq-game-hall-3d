@@ -18,6 +18,7 @@ import { PlazaSim } from './sim/plaza_sim.js';
 import { PlazaRenderer3D } from './render/plaza_renderer.js';
 import { HallAudioSynth } from './audio/hall_audio.js';
 import { HallHud } from './ui/hall_hud.js';
+import { findLastPlayedGameId, readHallProgress } from './contracts/progress.js';
 
 function cloneDeep(val) {
   if (val === null || val === undefined) return val;
@@ -53,6 +54,9 @@ function parseInitialGameFromLocation() {
       if (entry) return entry.id;
     }
   } catch (_) {}
+  // No explicit target: start on the game the family played most recently (继续上次)
+  const lastPlayed = findLastPlayedGameId(readHallProgress());
+  if (lastPlayed && resolveGameEntry(lastPlayed)) return resolveGameEntry(lastPlayed).id;
   return 'tang';
 }
 
@@ -189,7 +193,15 @@ function bootstrapHallApp() {
     audio.playReturnChime();
     sim.triggerPenguinCheer();
     currentSnapshot = sim.getSnapshot();
+    // The embedded game may have written new stars / best score while we were away
+    hud.syncProgressLine(currentSnapshot.selectedGameId);
     renderFrame();
+    return getState();
+  }
+
+  function refreshProgress() {
+    if (disposed) return getState();
+    hud.syncProgressLine(sim.selectedGameId);
     return getState();
   }
 
@@ -260,6 +272,8 @@ function bootstrapHallApp() {
       },
       games: enrichedGames,
       embedded: hud.getEmbeddedDiagnostics(currentSnapshot.selectedGame),
+      progress: readHallProgress(),
+      progressLine: hud.lastProgressLine || null,
       audio: audio.getDiagnostics(),
       hudClickableCount: hud.getVisibleClickableCount(),
       render: renderer.getDiagnostics(),
@@ -445,6 +459,16 @@ function bootstrapHallApp() {
     renderFrame();
   });
 
+  // Cross-game progress written by the 4 games (same origin) — refresh when we regain focus,
+  // when another tab writes storage, or when the page becomes visible again.
+  window.addEventListener('focus', () => refreshProgress());
+  window.addEventListener('storage', (ev) => {
+    if (!ev || !ev.key || ev.key === 'qq_hall_progress') refreshProgress();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshProgress();
+  });
+
   // Initial sync & render
   hud.syncSelectedGame(currentSnapshot.selectedGame);
   syncUrlHash(currentSnapshot.selectedGameId);
@@ -505,6 +529,7 @@ function bootstrapHallApp() {
     openStandalone,
     stepFrames,
     getState,
+    refreshProgress,
     setDeterministicMode,
     setMuted,
     toggleMute,

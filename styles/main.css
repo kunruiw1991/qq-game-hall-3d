@@ -266,6 +266,30 @@ body {
   max-width: 88vw;
 }
 
+.selected-progress-line {
+  font-size: 13px;
+  font-weight: 900;
+  color: #b45309;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 88vw;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: rgba(254, 243, 199, 0.95);
+}
+
+.selected-progress-line.is-new {
+  color: #0369a1;
+  background: rgba(224, 242, 254, 0.95);
+}
+
+.selected-progress-line.has-stars {
+  color: #92400e;
+  background: linear-gradient(90deg, #fef3c7, #fde68a);
+}
+
 .hall-action-dock {
   pointer-events: none;
   display: flex;
@@ -532,5 +556,10 @@ body {
 
   .selected-subtitle-zh {
     display: none;
+  }
+
+  .selected-progress-line {
+    font-size: 11px;
+    padding: 0 8px;
   }
 }

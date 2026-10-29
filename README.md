@@ -34,6 +34,22 @@
 
 ---
 
+---
+
+## Changelog — Fun Overhaul (v1.1)
+
+All four games received gameplay "Fun Overhaul" releases (faster pace, real stakes, juicy feedback,
+kid-readable HUDs); the hall now ties them together:
+
+- **Cross-game progress badges** — every game writes `localStorage['qq_hall_progress']`
+  (`{ gameId: { plays, best, stars, last } }`; GitHub Pages serves all five from the same origin), and
+  the selected-game card shows "★★☆ · 最佳 … · 玩过 N 次" (or "还没玩过 · 快来试试！"). The line refreshes
+  when you return from an embedded game, when the tab regains focus, and on `storage` events; corrupt
+  or missing storage is tolerated.
+- **继续上次** — with no `#hash` / `?game=` in the URL the hall pre-selects the most recently played game.
+- `window.__QQ_HALL__.refreshProgress()` added to the frozen test seam; `getState()` exposes
+  `progress` and `progressLine`. E2E suite grown from 28 to 31 tests.
+
 ## 确定性诊断接口 (`Deterministic Test Seam: window.__QQ_HALL__`)
 
 `Object.freeze(window.__QQ_HALL__)` 提供以下无后门确定性方法：

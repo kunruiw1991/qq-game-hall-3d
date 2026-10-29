@@ -11,6 +11,7 @@
  */
 
 import { GAME_CATALOG, TEST_IDS, UI_MODES } from '../contracts/catalog.js';
+import { formatProgressLine, readHallProgress } from '../contracts/progress.js';
 
 export class HallHud {
   /**
@@ -76,6 +77,9 @@ export class HallHud {
             </div>
             <div class="selected-subtitle-zh" id="selected-subtitle-zh">
               糖果水泡大乱斗 · 抢包山 · 机械傀儡 Boss
+            </div>
+            <div class="selected-progress-line" id="selected-progress-line" data-testid="selected-progress-line" data-stars="0">
+              还没玩过 · 快来试试！
             </div>
           </div>
 
@@ -182,6 +186,7 @@ export class HallHud {
     this.categoryPillEl = this.rootEl.querySelector('#selected-category-pill');
     this.titleZhEl = this.rootEl.querySelector('#selected-title-zh');
     this.subtitleZhEl = this.rootEl.querySelector('#selected-subtitle-zh');
+    this.progressLineEl = this.rootEl.querySelector('#selected-progress-line');
     this.selectedCardEl = this.rootEl.querySelector('#selected-game-card');
     this.audioMuteIconEl = this.rootEl.querySelector('#audio-mute-icon');
     this.embeddedRailDotEl = this.rootEl.querySelector('#embedded-rail-dot');
@@ -231,6 +236,7 @@ export class HallHud {
     this.titleZhEl.textContent = selectedGame.titleZh;
     this.subtitleZhEl.textContent = selectedGame.subtitleZh;
     this.selectedCardEl.style.borderColor = selectedGame.themeColor;
+    this.syncProgressLine(selectedGame.id);
 
     if (this.embeddedRailDotEl) {
       this.embeddedRailDotEl.style.backgroundColor = selectedGame.themeColor;
@@ -241,6 +247,22 @@ export class HallHud {
 
     this.btnStandaloneEl.setAttribute('data-live-url', selectedGame.liveUrl);
     this.btnStandaloneEl.setAttribute('data-repo-url', selectedGame.repoUrl);
+  }
+
+  /**
+   * Refreshes the cross-game progress line (stars / best / plays) for `gameId`
+   * from the shared-origin `qq_hall_progress` storage key. Never throws.
+   */
+  syncProgressLine(gameId) {
+    if (!this.progressLineEl) return null;
+    const progress = readHallProgress();
+    const line = formatProgressLine(gameId, progress);
+    this.progressLineEl.textContent = line.text;
+    this.progressLineEl.setAttribute('data-stars', String(line.stars));
+    this.progressLineEl.classList.toggle('is-new', line.isNew);
+    this.progressLineEl.classList.toggle('has-stars', line.stars > 0);
+    this.lastProgressLine = { gameId, ...line };
+    return this.lastProgressLine;
   }
 
   syncAudioMuted(muted) {
