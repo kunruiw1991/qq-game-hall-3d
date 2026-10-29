@@ -1,0 +1,536 @@
+/* ==========================================================================
+   QQ Game Hall 3D (QQ游戏大厅 3D — 童年四大经典合集)
+   Multi-Viewport Kid-Friendly Styles (1280x800, 1024x768, 844x390, 390x844)
+   - Zero scrollbars (fixed viewport lock)
+   - Strictly <= 6 clickable HUD controls at any time (5 in Hall, 1 in Embedded)
+   - Every clickable control >= 68x68px with zero pairwise overlap
+   - Dedicated 84px non-overlapping rail (landscape) / 84px top strip (portrait)
+     in Embedded mode so Return Pill never overlaps any embedded game HUD
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: radial-gradient(circle at 50% 30%, #f0f9ff 0%, #dbeafe 65%, #bfdbfe 100%);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Nunito", system-ui, -apple-system, sans-serif;
+  color: #0f172a;
+}
+
+#plaza-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+  touch-action: none;
+  cursor: grab;
+}
+
+#plaza-canvas:active {
+  cursor: grabbing;
+}
+
+#ui-root {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.ui-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Candy Toy Glossy Button Base (All buttons >= 68x68px)
+   ========================================================================== */
+.candy-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 68px;
+  min-height: 68px;
+  border: 3.5px solid #ffffff;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 3px rgba(15, 23, 42, 0.36);
+  box-shadow:
+    0 6px 0 rgba(15, 23, 42, 0.22),
+    0 10px 22px rgba(15, 23, 42, 0.22),
+    inset 0 3px 6px rgba(255, 255, 255, 0.58);
+  transition: transform 0.12s ease, filter 0.12s ease;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+
+.candy-btn:hover {
+  filter: brightness(1.06);
+}
+
+.candy-btn:active {
+  transform: translateY(3px) scale(0.97);
+}
+
+.candy-btn .btn-svg {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.candy-btn .btn-svg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.candy-btn .btn-label {
+  font-size: 20px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.btn-icon-round {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+}
+
+/* ==========================================================================
+   1. Hall Plaza HUD Screen
+   ========================================================================== */
+.screen-hall {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 14px 14px;
+}
+
+.hall-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.hall-brand-pill {
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.90);
+  border: 3px solid #ffffff;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.22);
+  max-width: calc(100vw - 104px);
+}
+
+.brand-penguin-badge {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.brand-penguin-badge svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.brand-title-zh {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #0284c7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-subtitle-zh {
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-audio-mute {
+  background: linear-gradient(180deg, #fb7185 0%, #ec4899 55%, #db2777 100%);
+}
+
+/* Bottom Showcase Banner + Action Dock */
+.hall-bottom-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.selected-game-card {
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3.5px solid #38bdf8;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
+  max-width: min(560px, 94vw);
+}
+
+.selected-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.selected-index-pill {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #facc15;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.selected-category-pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #38bdf8;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.selected-title-zh {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.selected-subtitle-zh {
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 88vw;
+}
+
+.hall-action-dock {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.btn-carousel-nav {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 60%, #0369a1 100%);
+}
+
+.btn-play-primary {
+  width: 184px;
+  height: 74px;
+  padding: 0 22px;
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 52%, #16a34a 100%);
+  animation: hallPlayPulse 2.0s ease-in-out infinite;
+}
+
+.btn-standalone-launch {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(180deg, #a855f7 0%, #7e22ce 60%, #6b21a8 100%);
+}
+
+@keyframes hallPlayPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ==========================================================================
+   2. Embedded Seamless Player Screen
+      Dedicated 84px Left Rail in Landscape / 84px Top Strip in Portrait
+      so Return Pill and Game Iframe have 0.0 px overlap at all viewports!
+   ========================================================================== */
+.screen-embedded {
+  pointer-events: auto;
+  background: #0f172a;
+}
+
+/* Landscape default: 84px left rail + (100% - 84px) right iframe */
+.embedded-corner-dock {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 84px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 6px;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  border-right: 2px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 4px 0 14px rgba(15, 23, 42, 0.35);
+  pointer-events: auto;
+}
+
+.btn-return-hall {
+  width: 70px;
+  height: 70px;
+  min-width: 70px;
+  min-height: 70px;
+  padding: 4px;
+  border-radius: 22px;
+  flex-direction: column;
+  gap: 2px;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
+}
+
+.return-pill-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.btn-return-hall .btn-label {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.embedded-rail-badge {
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  max-width: 72px;
+}
+
+.embedded-rail-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+  flex-shrink: 0;
+}
+
+.embedded-rail-title {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 1px;
+  max-height: 140px;
+  overflow: hidden;
+}
+
+.embedded-game-iframe {
+  position: fixed;
+  top: 0;
+  left: 84px;
+  width: calc(100% - 84px);
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #0f172a;
+  z-index: 1;
+}
+
+/* Portrait layout (e.g. 390x844): 84px top strip + (100% - 84px) bottom iframe */
+@media (orientation: portrait) {
+  .embedded-corner-dock {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: 84px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 2px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.35);
+  }
+
+  .btn-return-hall {
+    width: 118px;
+    height: 68px;
+    min-width: 118px;
+    min-height: 68px;
+    padding: 0 14px;
+    border-radius: 999px;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .return-pill-icon {
+    font-size: 22px;
+  }
+
+  .btn-return-hall .btn-label {
+    font-size: 18px;
+  }
+
+  .embedded-rail-badge {
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 14px;
+    max-width: calc(100vw - 156px);
+    font-size: 14px;
+  }
+
+  .embedded-rail-title {
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+    letter-spacing: 0;
+    max-height: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .embedded-game-iframe {
+    top: 84px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 84px);
+  }
+}
+
+/* ==========================================================================
+   Responsive Compact Rules for Narrow Portrait (390x844) & Short Landscape (844x390)
+   ========================================================================== */
+@media (max-width: 460px) {
+  .screen-hall {
+    padding: 10px 8px 12px;
+  }
+
+  .hall-brand-pill {
+    padding: 6px 12px 6px 8px;
+    max-width: calc(100vw - 92px);
+  }
+
+  .brand-penguin-badge {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-title-zh {
+    font-size: 18px;
+  }
+
+  .brand-subtitle-zh {
+    font-size: 11px;
+  }
+
+  .btn-audio-mute {
+    width: 68px;
+    height: 68px;
+  }
+
+  .hall-action-dock {
+    gap: 8px;
+  }
+
+  .btn-carousel-nav,
+  .btn-standalone-launch {
+    width: 68px;
+    height: 68px;
+  }
+
+  .btn-play-primary {
+    width: 124px;
+    height: 68px;
+    padding: 0 12px;
+  }
+
+  .btn-play-primary .btn-label {
+    font-size: 16px;
+  }
+
+  .btn-play-primary .btn-svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-height: 440px) {
+  .screen-hall {
+    padding: 6px 12px 8px;
+  }
+
+  .selected-game-card {
+    padding: 4px 14px;
+  }
+
+  .selected-title-zh {
+    font-size: 18px;
+  }
+
+  .selected-subtitle-zh {
+    display: none;
+  }
+}
